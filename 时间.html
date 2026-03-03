@@ -1,0 +1,1856 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0, user-scalable=yes">
+    <title>时光记录者 · 专注成长</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+        }
+
+        :root {
+            --bg-primary: #f5f5f5;
+            --bg-secondary: #ffffff;
+            --text-primary: #2e4057;
+            --text-secondary: #5a6e7f;
+            --accent: #88b8a8;
+            --border: #e5d9d3;
+            --card-bg: #ffffff;
+            --high-priority: #e67e6b;
+            --mid-priority: #f4c542;
+            --low-priority: #7fb385;
+            --shadow: 0 4px 12px rgba(46, 64, 87, 0.08);
+            --nav-bg: #ffffff;
+            --overlay: rgba(0, 0, 0, 0.5);
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #2e4057;
+            --bg-secondary: #3a4f6a;
+            --text-primary: #f5f5f5;
+            --text-secondary: #cbd5e0;
+            --accent: #88b8a8;
+            --border: #4a5f7a;
+            --card-bg: #3a4f6a;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            --nav-bg: #2e4057;
+            --overlay: rgba(0, 0, 0, 0.7);
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* 主容器 - 居中布局 */
+        .app-container {
+            width: 100%;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--bg-primary);
+            position: relative;
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* 内容区域 - 居中显示 */
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            padding-bottom: 100px;
+            transition: all 0.3s ease;
+        }
+
+        @media (min-width: 768px) {
+            .content {
+                max-width: 700px;
+                padding: 30px;
+                padding-bottom: 100px;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .content {
+                max-width: 800px;
+                padding: 40px;
+                padding-bottom: 120px;
+            }
+        }
+
+        /* 底部导航栏 */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: var(--nav-bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 8px 0 16px;
+            border-top: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            gap: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .bottom-nav {
+                gap: 40px;
+                padding: 12px 0 20px;
+            }
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            color: var(--text-secondary);
+            font-size: 12px;
+            cursor: pointer;
+            transition: color 0.2s;
+            min-width: 60px;
+        }
+
+        .nav-item.active {
+            color: var(--accent);
+        }
+
+        .nav-item i {
+            font-size: 24px;
+        }
+
+        /* 卡片样式 */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 24px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        /* 今日任务卡片 */
+        .tasks-card {
+            background: linear-gradient(135deg, var(--card-bg), var(--bg-secondary));
+            border-left: 4px solid var(--accent);
+        }
+
+        /* 任务项 */
+        .task-item {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            transition: all 0.3s;
+            cursor: pointer;
+            border-radius: 12px;
+        }
+
+        .task-item:last-child {
+            border-bottom: none;
+        }
+
+        .task-item:hover {
+            background-color: rgba(136, 184, 168, 0.05);
+        }
+
+        .task-item.completed {
+            opacity: 0.5;
+            order: 999;
+        }
+
+        .task-priority {
+            width: 12px;
+            height: 12px;
+            border-radius: 6px;
+            margin-right: 16px;
+        }
+
+        .priority-high { background-color: var(--high-priority); }
+        .priority-mid { background-color: var(--mid-priority); }
+        .priority-low { background-color: var(--low-priority); }
+
+        .task-content {
+            flex: 1;
+        }
+
+        .task-title {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .task-meta {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 16px;
+        }
+
+        .task-actions button {
+            background: none;
+            border: none;
+            color: var(--accent);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 20px;
+            transition: all 0.2s;
+        }
+
+        .task-actions button:hover {
+            background-color: var(--accent);
+            color: white;
+        }
+
+        /* 添加任务按钮 */
+        .add-task-btn {
+            width: 100%;
+            padding: 16px;
+            background-color: var(--bg-secondary);
+            border: 2px dashed var(--accent);
+            border-radius: 28px;
+            color: var(--accent);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+            margin-top: 16px;
+        }
+
+        .add-task-btn:hover {
+            background-color: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        /* 计时器浮层 */
+        .timer-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--overlay);
+            backdrop-filter: blur(10px);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .timer-overlay.active {
+            display: flex;
+        }
+
+        .timer-container {
+            background-color: var(--card-bg);
+            border-radius: 48px;
+            padding: 48px;
+            max-width: 90%;
+            width: 700px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+        }
+
+        .timer-mode-selector {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 30px;
+            justify-content: center;
+        }
+
+        .mode-btn {
+            padding: 12px 24px;
+            border-radius: 30px;
+            border: 2px solid var(--accent);
+            background: none;
+            color: var(--accent);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex: 1;
+            max-width: 150px;
+        }
+
+        .mode-btn.active {
+            background-color: var(--accent);
+            color: white;
+        }
+
+        .countdown-input {
+            display: none;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .countdown-input.active {
+            display: block;
+        }
+
+        .countdown-input input {
+            width: 120px;
+            padding: 12px;
+            font-size: 24px;
+            text-align: center;
+            border-radius: 30px;
+            border: 2px solid var(--accent);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            margin: 0 10px;
+        }
+
+        .current-task-info {
+            font-size: 24px;
+            margin: 20px 0;
+            color: var(--text-primary);
+            text-align: center;
+        }
+
+        .timer-display-large {
+            font-size: 120px;
+            font-weight: 300;
+            font-variant-numeric: tabular-nums;
+            color: var(--accent);
+            margin: 30px 0;
+            line-height: 1;
+            text-align: center;
+            text-shadow: 0 0 20px rgba(136, 184, 168, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .timer-display-large {
+                font-size: 80px;
+            }
+        }
+
+        /* 白噪音面板 */
+        .noise-panel {
+            margin: 30px 0;
+            padding: 20px;
+            background: var(--bg-secondary);
+            border-radius: 30px;
+        }
+
+        .noise-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin: 16px 0;
+        }
+
+        .noise-item {
+            background-color: var(--card-bg);
+            border-radius: 20px;
+            padding: 16px 8px;
+            text-align: center;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+            box-shadow: var(--shadow);
+        }
+
+        .noise-item:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent);
+        }
+
+        .noise-item.active {
+            border-color: var(--accent);
+            background-color: rgba(136, 184, 168, 0.1);
+        }
+
+        .noise-item.playing {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(136, 184, 168, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(136, 184, 168, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(136, 184, 168, 0); }
+        }
+
+        .noise-item i {
+            font-size: 32px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 16px 0;
+        }
+
+        .volume-slider {
+            flex: 1;
+            height: 8px;
+            -webkit-appearance: none;
+            background: linear-gradient(90deg, var(--accent) 0%, var(--accent) 50%, var(--border) 50%);
+            border-radius: 4px;
+            outline: none;
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 10px;
+            background: var(--accent);
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .sleep-timer-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 12px 0;
+        }
+
+        .sleep-btn {
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid var(--accent);
+            background: none;
+            color: var(--accent);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .sleep-btn:hover {
+            background-color: var(--accent);
+            color: white;
+        }
+
+        /* 计时控制按钮 */
+        .timer-controls-large {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .timer-control-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 35px;
+            border: none;
+            background-color: var(--accent);
+            color: white;
+            font-size: 28px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .timer-control-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(136, 184, 168, 0.5);
+        }
+
+        .timer-control-btn.pause {
+            background-color: var(--text-secondary);
+        }
+
+        .timer-control-btn.stop {
+            background-color: var(--high-priority);
+        }
+
+        /* 模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--overlay);
+            backdrop-filter: blur(5px);
+            z-index: 3000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            max-width: 90%;
+            width: 500px;
+            border-radius: 32px;
+            padding: 32px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+        }
+
+        .input-group input,
+        .input-group select {
+            width: 100%;
+            padding: 14px;
+            border-radius: 28px;
+            border: 1px solid var(--border);
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 16px;
+        }
+
+        .btn {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 16px 28px;
+            border-radius: 32px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(136, 184, 168, 0.3);
+        }
+
+        .btn.secondary {
+            background-color: var(--text-secondary);
+        }
+
+        .module-checkboxes {
+            display: grid;
+            gap: 12px;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        }
+
+        .module-checkboxes label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            cursor: pointer;
+        }
+
+        /* 其他页面样式 */
+        .achievement-card {
+            background: linear-gradient(135deg, var(--card-bg), var(--bg-secondary));
+            border-radius: 24px;
+            padding: 24px;
+            margin-bottom: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .book-item {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            background-color: var(--bg-secondary);
+            border-radius: 20px;
+            margin-bottom: 12px;
+        }
+
+        .avatar-upload {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            margin: 24px 0;
+        }
+
+        .avatar-preview {
+            width: 120px;
+            height: 120px;
+            border-radius: 60px;
+            background-color: var(--border);
+            background-size: cover;
+            background-position: center;
+            border: 3px solid var(--accent);
+        }
+
+        .color-picker {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 12px;
+            margin: 16px 0;
+        }
+
+        .color-option {
+            aspect-ratio: 1/1;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .color-option.selected {
+            border-color: var(--text-primary);
+        }
+
+        /* 页面切换 */
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container" id="appContainer">
+        <!-- 内容区域 -->
+        <div class="content" id="content">
+            <!-- 专注页面 -->
+            <div id="focusPage" class="page active">
+                <!-- 今日任务卡片 -->
+                <div class="card tasks-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h2 style="font-size: 24px;">📋 今日任务</h2>
+                        <span style="color: var(--text-secondary);" id="taskCount">0个任务</span>
+                    </div>
+                    
+                    <div id="taskList">
+                        <!-- 任务动态渲染 -->
+                    </div>
+
+                    <!-- 添加任务按钮 -->
+                    <button class="add-task-btn" onclick="showAddTaskModal()">
+                        <span style="font-size: 24px;">+</span> 添加新任务
+                    </button>
+                </div>
+            </div>
+
+            <!-- 成就页面 -->
+            <div id="achievementPage" class="page">
+                <div class="card">
+                    <h2 style="margin-bottom: 24px;">🏆 成就目标</h2>
+                    <div class="achievement-card">
+                        <div style="font-size: 40px; margin-bottom: 16px;">🥉</div>
+                        <h3 style="margin-bottom: 12px;">小成就</h3>
+                        <input type="text" id="smallAchievement" placeholder="例如: 一周专注30小时" style="width: 100%; padding: 14px; border-radius: 28px; border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-primary); margin-bottom: 12px;">
+                        <input type="text" id="smallReward" placeholder="达成奖励 (如: 一杯奶茶)" style="width: 100%; padding: 14px; border-radius: 28px; border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-primary);">
+                    </div>
+                    <div class="achievement-card">
+                        <div style="font-size: 40px; margin-bottom: 16px;">🥇</div>
+                        <h3 style="margin-bottom: 12px;">大成就</h3>
+                        <input type="text" id="bigAchievement" placeholder="例如: 一周专注100小时" style="width: 100%; padding: 14px; border-radius: 28px; border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-primary); margin-bottom: 12px;">
+                        <input type="text" id="bigReward" placeholder="达成奖励" style="width: 100%; padding: 14px; border-radius: 28px; border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-primary);">
+                    </div>
+                    <button class="btn" onclick="saveAchievements()">保存成就设置</button>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin-bottom: 20px;">📊 本周统计</h3>
+                    <div style="text-align: center; padding: 30px; background: var(--bg-secondary); border-radius: 24px;">
+                        <div style="font-size: 48px; color: var(--accent); margin-bottom: 20px;"><span id="weeklyHours">0</span>小时</div>
+                        <div style="display: flex; gap: 30px; justify-content: center; flex-wrap: wrap;">
+                            <div><span style="color: #4A90E2; font-size: 20px;">●</span> 学习: <span id="studyHours">0</span>h</div>
+                            <div><span style="color: #50C878; font-size: 20px;">●</span> 运动: <span id="sportHours">0</span>h</div>
+                            <div><span style="color: #FF9F4D; font-size: 20px;">●</span> 习惯: <span id="habitHours">0</span>h</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin-bottom: 16px;">📜 成就记录</h3>
+                    <div id="achievementHistory"></div>
+                </div>
+            </div>
+
+            <!-- 音乐页面 -->
+            <div id="musicPage" class="page">
+                <div class="card">
+                    <h2 style="margin-bottom: 24px;">🎵 白噪音库</h2>
+                    <div class="noise-grid" id="musicLibrary">
+                        <!-- 动态加载 -->
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin-bottom: 16px;">📤 上传自定义音频</h3>
+                    <input type="file" id="audioUpload" accept="audio/mp3,audio/wav,audio/m4a" style="width: 100%; padding: 16px; border: 2px dashed var(--border); border-radius: 28px; background: var(--bg-secondary);">
+                    <p style="font-size: 14px; color: var(--text-secondary); margin-top: 12px;">支持 MP3/WAV/M4A, ≤10MB</p>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin-bottom: 16px;">我的音效</h3>
+                    <div id="customAudioList" style="display: grid; gap: 12px;"></div>
+                </div>
+            </div>
+
+            <!-- 书籍页面 -->
+            <div id="booksPage" class="page">
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h2>📚 我的书房</h2>
+                        <button onclick="showAddBookModal()" style="background: none; border: none; color: var(--accent); font-size: 28px; cursor: pointer;">+</button>
+                    </div>
+                    <div id="bookList" style="display: grid; gap: 12px;"></div>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin-bottom: 16px;">📖 当前阅读</h3>
+                    <div id="currentReading"></div>
+                </div>
+            </div>
+
+            <!-- 我的页面 -->
+            <div id="profilePage" class="page">
+                <div class="card">
+                    <h2 style="margin-bottom: 24px;">👤 个人资料</h2>
+                    <div class="avatar-upload">
+                        <div class="avatar-preview" id="avatarPreview"></div>
+                        <input type="file" id="avatarUpload" accept="image/*" style="padding: 12px; border: 1px solid var(--border); border-radius: 28px; width: 100%; max-width: 300px;">
+                    </div>
+                    <div class="input-group">
+                        <label>昵称</label>
+                        <input type="text" id="nickname" placeholder="你的昵称">
+                    </div>
+                    <div class="input-group">
+                        <label>账号</label>
+                        <input type="text" id="username" placeholder="登录账号">
+                    </div>
+                    <div class="input-group">
+                        <label>密码</label>
+                        <input type="password" id="password" placeholder="登录密码">
+                    </div>
+                    <button class="btn" onclick="saveProfile()">保存资料</button>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin-bottom: 20px;">🎨 主题设置</h3>
+                    <div class="input-group">
+                        <label>深色/浅色</label>
+                        <select id="themeMode">
+                            <option value="light">浅色模式</option>
+                            <option value="dark">深色模式</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>自定义主色</label>
+                        <div class="color-picker" id="colorPicker">
+                            <div class="color-option selected" style="background-color: #88b8a8;" data-color="#88b8a8"></div>
+                            <div class="color-option" style="background-color: #4A90E2;" data-color="#4A90E2"></div>
+                            <div class="color-option" style="background-color: #50C878;" data-color="#50C878"></div>
+                            <div class="color-option" style="background-color: #FF9F4D;" data-color="#FF9F4D"></div>
+                            <div class="color-option" style="background-color: #9B8BBF;" data-color="#9B8BBF"></div>
+                            <div class="color-option" style="background-color: #F4A6A6;" data-color="#F4A6A6"></div>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>背景图片</label>
+                        <input type="file" id="bgImage" accept="image/*">
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin-bottom: 16px;">⚙️ 数据管理</h3>
+                    <div style="display: flex; gap: 12px;">
+                        <button class="btn secondary" onclick="exportData()" style="flex: 1;">导出</button>
+                        <button class="btn secondary" onclick="importData()" style="flex: 1;">导入</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部导航 -->
+        <div class="bottom-nav">
+            <div class="nav-item active" data-page="focus">
+                <i>⏱️</i>
+                <span>专注</span>
+            </div>
+            <div class="nav-item" data-page="achievement">
+                <i>🏆</i>
+                <span>成就</span>
+            </div>
+            <div class="nav-item" data-page="music">
+                <i>🎵</i>
+                <span>音乐</span>
+            </div>
+            <div class="nav-item" data-page="books">
+                <i>📚</i>
+                <span>书籍</span>
+            </div>
+            <div class="nav-item" data-page="profile">
+                <i>👤</i>
+                <span>我的</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 计时器浮层 -->
+    <div class="timer-overlay" id="timerOverlay">
+        <div class="timer-container">
+            <!-- 计时模式选择 -->
+            <div class="timer-mode-selector">
+                <button class="mode-btn active" id="modeCountupBtn">⏫ 正计时</button>
+                <button class="mode-btn" id="modeCountdownBtn">⏬ 倒计时</button>
+            </div>
+
+            <!-- 倒计时输入 -->
+            <div class="countdown-input" id="countdownInput">
+                <span style="font-size: 18px;">设置分钟:</span>
+                <input type="number" id="countdownMinutes" value="25" min="1" max="999">
+                <span style="font-size: 18px;">分钟</span>
+            </div>
+
+            <div class="current-task-info" id="currentTaskName">选择任务开始</div>
+            <div class="timer-display-large" id="timerDisplayLarge">00:00:00</div>
+            
+            <!-- 白噪音面板 -->
+            <div class="noise-panel">
+                <h3 style="margin-bottom: 16px;">🎵 白噪音</h3>
+                <div class="noise-grid" id="timerNoiseGrid">
+                    <div class="noise-item" data-noise="rain">
+                        <i>🌧️</i>
+                        <span>雨声</span>
+                        <audio preload="auto" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_8a4f5b2a4f.mp3?filename=heavy-rain-36180.mp3"></audio>
+                    </div>
+                    <div class="noise-item" data-noise="waves">
+                        <i>🌊</i>
+                        <span>海浪</span>
+                        <audio preload="auto" src="https://cdn.pixabay.com/download/audio/2022/03/24/audio_d5d5d9c9d9.mp3?filename=ocean-waves-112906.mp3"></audio>
+                    </div>
+                    <div class="noise-item" data-noise="forest">
+                        <i>🌲</i>
+                        <span>森林</span>
+                        <audio preload="auto" src="https://cdn.pixabay.com/download/audio/2022/06/23/audio_0b5f7e5f7e.mp3?filename=forest-with-small-river-birds-and-woodpecker-6739.mp3"></audio>
+                    </div>
+                    <div class="noise-item" data-noise="fireplace">
+                        <i>🔥</i>
+                        <span>壁炉</span>
+                        <audio preload="auto" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_8f5f5f5f5f.mp3?filename=fireplace-2-36183.mp3"></audio>
+                    </div>
+                    <div class="noise-item" data-noise="lofi">
+                        <i>🎵</i>
+                        <span>轻音乐</span>
+                        <audio preload="auto" src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_4c5f5f5f5f.mp3?filename=lofi-study-112191.mp3"></audio>
+                    </div>
+                    <div class="noise-item" id="timerCustomNoiseBtn">
+                        <i>📁</i>
+                        <span>上传</span>
+                    </div>
+                </div>
+                
+                <div class="volume-control">
+                    <span>🔊</span>
+                    <input type="range" class="volume-slider" id="timerVolumeSlider" min="0" max="100" value="50">
+                    <span id="volumePercent">50%</span>
+                </div>
+
+                <div class="sleep-timer-buttons">
+                    <button class="sleep-btn" onclick="setSleepTimer(15)">15min</button>
+                    <button class="sleep-btn" onclick="setSleepTimer(30)">30min</button>
+                    <button class="sleep-btn" onclick="setSleepTimer(45)">45min</button>
+                    <button class="sleep-btn" onclick="setSleepTimer(60)">60min</button>
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 8px;">
+                    <input type="number" id="timerCustomSleep" placeholder="自定义分钟" min="1" max="480" style="flex: 1; padding: 8px; border-radius: 20px; border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-primary);">
+                    <button class="sleep-btn" onclick="setCustomSleepTimer()">设置</button>
+                </div>
+            </div>
+
+            <!-- 计时控制按钮 -->
+            <div class="timer-controls-large">
+                <button class="timer-control-btn pause" id="pauseTimerLarge">⏸️</button>
+                <button class="timer-control-btn stop" id="stopTimerLarge">⬛</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加任务模态框 -->
+    <div class="modal" id="taskModal">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 24px; font-size: 24px;">新建任务</h3>
+            <div class="input-group">
+                <label>任务名称</label>
+                <input type="text" id="taskTitle" placeholder="例如: 复习英语">
+            </div>
+            <div class="input-group">
+                <label>优先级</label>
+                <select id="taskPriority">
+                    <option value="high">高 🔴</option>
+                    <option value="mid">中 🟡</option>
+                    <option value="low">低 🟢</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>所属模块 (多选)</label>
+                <div class="module-checkboxes" id="moduleCheckboxes"></div>
+            </div>
+            <div class="input-group">
+                <label>截止日期</label>
+                <input type="date" id="taskDeadline">
+            </div>
+            <div style="display: flex; gap: 16px; margin-top: 32px;">
+                <button class="btn" onclick="addTask()" style="flex: 2;">添加</button>
+                <button class="btn secondary" onclick="hideAddTaskModal()" style="flex: 1;">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加书籍模态框 -->
+    <div class="modal" id="bookModal">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 24px; font-size: 24px;">添加书籍</h3>
+            <div class="input-group">
+                <label>书名</label>
+                <input type="text" id="bookTitle" placeholder="输入书名">
+            </div>
+            <div class="input-group">
+                <label>上传文件</label>
+                <input type="file" id="bookFile" accept=".txt,.doc,.docx,.epub">
+            </div>
+            <div style="display: flex; gap: 16px; margin-top: 32px;">
+                <button class="btn" onclick="addBook()" style="flex: 2;">添加</button>
+                <button class="btn secondary" onclick="hideAddBookModal()" style="flex: 1;">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== 音频管理器 ====================
+        class AudioManager {
+            constructor() {
+                this.currentAudio = null;
+                this.currentNoiseType = null;
+                this.volume = 0.5;
+                this.isPlaying = false;
+                this.sleepTimer = null;
+            }
+
+            async play(noiseElement) {
+                try {
+                    // 如果点击同一个音效，则停止
+                    if (this.currentNoiseType === noiseElement.dataset.noise && this.isPlaying) {
+                        this.stop();
+                        return;
+                    }
+
+                    this.stop();
+
+                    // 获取audio元素
+                    const audioElement = noiseElement.querySelector('audio');
+                    if (!audioElement) return;
+
+                    this.currentAudio = audioElement;
+                    this.currentAudio.loop = true;
+                    this.currentAudio.volume = this.volume;
+                    
+                    // 尝试播放
+                    await this.currentAudio.play();
+                    
+                    this.currentNoiseType = noiseElement.dataset.noise;
+                    this.isPlaying = true;
+                    
+                    // 更新UI
+                    this.updateNoiseUI(noiseElement);
+                    
+                } catch (error) {
+                    console.error('播放失败:', error);
+                    if (error.name === 'NotAllowedError') {
+                        alert('浏览器需要先点击页面才能播放音频，请再试一次');
+                    } else if (error.name === 'NotSupportedError') {
+                        alert('音频格式不支持或网络错误');
+                    }
+                }
+            }
+
+            playCustom(url, id) {
+                if (this.currentNoiseType === id && this.isPlaying) {
+                    this.stop();
+                    return;
+                }
+
+                this.stop();
+
+                this.currentAudio = new Audio(url);
+                this.currentAudio.loop = true;
+                this.currentAudio.volume = this.volume;
+                
+                this.currentAudio.play().then(() => {
+                    this.currentNoiseType = id;
+                    this.isPlaying = true;
+                    this.updateCustomNoiseUI(id);
+                }).catch(error => {
+                    console.error('播放失败:', error);
+                    alert('播放失败，请检查音频文件');
+                });
+            }
+
+            stop() {
+                if (this.currentAudio) {
+                    this.currentAudio.pause();
+                    this.currentAudio.currentTime = 0;
+                    this.currentAudio = null;
+                }
+                this.isPlaying = false;
+                this.currentNoiseType = null;
+                
+                // 清除UI状态
+                document.querySelectorAll('.noise-item').forEach(n => {
+                    n.classList.remove('active', 'playing');
+                });
+            }
+
+            setVolume(value) {
+                this.volume = value / 100;
+                if (this.currentAudio) {
+                    this.currentAudio.volume = this.volume;
+                }
+                document.getElementById('volumePercent').textContent = value + '%';
+                
+                // 更新滑块背景
+                const slider = document.getElementById('timerVolumeSlider');
+                slider.style.background = `linear-gradient(90deg, var(--accent) 0%, var(--accent) ${value}%, var(--border) ${value}%)`;
+            }
+
+            setSleepTimer(minutes) {
+                if (this.sleepTimer) {
+                    clearTimeout(this.sleepTimer);
+                }
+                
+                this.sleepTimer = setTimeout(() => {
+                    this.stop();
+                    alert('⏰ 白噪音已定时关闭');
+                }, minutes * 60 * 1000);
+                
+                alert(`定时关闭已设置：${minutes}分钟后`);
+            }
+
+            updateNoiseUI(activeElement) {
+                document.querySelectorAll('.noise-item').forEach(n => {
+                    n.classList.remove('active', 'playing');
+                });
+                activeElement.classList.add('active', 'playing');
+            }
+
+            updateCustomNoiseUI(id) {
+                document.querySelectorAll('.noise-item').forEach(n => {
+                    n.classList.remove('active', 'playing');
+                    if (n.dataset.noise === id) {
+                        n.classList.add('active', 'playing');
+                    }
+                });
+            }
+        }
+
+        // ==================== 全局变量 ====================
+        const audioManager = new AudioManager();
+        let timerInterval = null;
+        
+        let state = {
+            user: {
+                username: '',
+                nickname: '',
+                avatar: '',
+                password: ''
+            },
+            tasks: [],
+            modules: [
+                { id: 'study', name: '学习', color: '#4A90E2', icon: '📚' },
+                { id: 'sport', name: '运动', color: '#50C878', icon: '💪' },
+                { id: 'habit', name: '习惯', color: '#FF9F4D', icon: '⭐' }
+            ],
+            books: [],
+            customNoises: [],
+            achievements: {
+                small: { target: '一周专注30小时', reward: '', achieved: false },
+                big: { target: '一周专注100小时', reward: '', achieved: false }
+            },
+            focusRecords: [],
+            theme: {
+                mode: 'light',
+                primaryColor: '#88b8a8',
+                bgImage: ''
+            },
+            timer: {
+                seconds: 0,
+                isRunning: false,
+                mode: 'countup', // 'countup' or 'countdown'
+                countdownTarget: 0,
+                currentTaskId: null,
+                currentTaskName: ''
+            }
+        };
+
+        // ==================== 初始化 ====================
+        function init() {
+            loadState();
+            renderTasks();
+            renderBooks();
+            renderCustomNoises();
+            updateStats();
+            initEventListeners();
+            applyTheme();
+            updateTaskCount();
+            
+            // 初始化头像预览
+            if (state.user.avatar) {
+                document.getElementById('avatarPreview').style.backgroundImage = `url('${state.user.avatar}')`;
+            } else {
+                document.getElementById('avatarPreview').style.backgroundImage = `url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2250%22 fill=%22%2388b8a8%22/><text x=%2250%22 y=%2270%22 font-size=%2250%22 text-anchor=%22middle%22 fill=%22white%22>👤</text></svg>')`;
+            }
+
+            // 初始化音量滑块
+            document.getElementById('timerVolumeSlider').value = 50;
+            audioManager.setVolume(50);
+        }
+
+        // ==================== 本地存储 ====================
+        function saveState() {
+            localStorage.setItem('timeRecorderState', JSON.stringify(state));
+        }
+
+        function loadState() {
+            const saved = localStorage.getItem('timeRecorderState');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    state = { ...state, ...parsed };
+                } catch (e) {
+                    console.error('加载数据失败', e);
+                }
+            }
+        }
+
+        // ==================== 主题 ====================
+        function applyTheme() {
+            document.documentElement.setAttribute('data-theme', state.theme.mode);
+            document.documentElement.style.setProperty('--accent', state.theme.primaryColor);
+            if (state.theme.bgImage) {
+                document.getElementById('appContainer').style.backgroundImage = `url('${state.theme.bgImage}')`;
+                document.getElementById('appContainer').style.backgroundSize = 'cover';
+                document.getElementById('appContainer').style.backgroundPosition = 'center';
+            }
+        }
+
+        // ==================== 任务渲染 ====================
+        function renderTasks() {
+            const taskList = document.getElementById('taskList');
+            if (!taskList) return;
+
+            const activeTasks = state.tasks.filter(t => !t.completed);
+            const completedTasks = state.tasks.filter(t => t.completed);
+
+            taskList.innerHTML = '';
+
+            activeTasks.forEach(task => {
+                taskList.appendChild(createTaskElement(task));
+            });
+
+            completedTasks.forEach(task => {
+                const el = createTaskElement(task);
+                el.classList.add('completed');
+                taskList.appendChild(el);
+            });
+
+            updateTaskCount();
+        }
+
+        function createTaskElement(task) {
+            const div = document.createElement('div');
+            div.className = 'task-item';
+            div.dataset.taskId = task.id;
+            div.onclick = () => showTimerForTask(task.id);
+            
+            const priorityClass = `priority-${task.priority}`;
+            
+            div.innerHTML = `
+                <div class="task-priority ${priorityClass}"></div>
+                <div class="task-content">
+                    <div class="task-title">${task.title}</div>
+                    <div class="task-meta">
+                        ${task.focusTime ? '专注: ' + formatTime(task.focusTime) : ''}
+                        ${task.deadline ? ' | 截止: ' + task.deadline : ''}
+                    </div>
+                </div>
+                <div class="task-actions" onclick="event.stopPropagation()">
+                    <button onclick="completeTask('${task.id}')">✓</button>
+                    <button onclick="deleteTask('${task.id}')">🗑️</button>
+                </div>
+            `;
+            
+            return div;
+        }
+
+        function updateTaskCount() {
+            const activeCount = state.tasks.filter(t => !t.completed).length;
+            document.getElementById('taskCount').textContent = activeCount + '个任务';
+        }
+
+        // ==================== 计时器 ====================
+        function showTimerForTask(taskId) {
+            const task = state.tasks.find(t => t.id === taskId);
+            if (task && !task.completed) {
+                state.timer.currentTaskId = taskId;
+                state.timer.currentTaskName = task.title;
+                state.timer.seconds = task.focusTime || 0;
+                state.timer.mode = 'countup';
+                state.timer.isRunning = false;
+                
+                document.getElementById('currentTaskName').textContent = task.title;
+                document.getElementById('timerOverlay').classList.add('active');
+                
+                // 重置模式按钮
+                document.getElementById('modeCountupBtn').classList.add('active');
+                document.getElementById('modeCountdownBtn').classList.remove('active');
+                document.getElementById('countdownInput').classList.remove('active');
+                
+                updateTimerDisplay();
+            }
+        }
+
+        function startTimer() {
+            if (state.timer.isRunning) return;
+            
+            state.timer.isRunning = true;
+            timerInterval = setInterval(() => {
+                if (state.timer.mode === 'countup') {
+                    state.timer.seconds++;
+                } else {
+                    if (state.timer.seconds > 0) {
+                        state.timer.seconds--;
+                        if (state.timer.seconds === 0) {
+                            // 倒计时结束
+                            clearInterval(timerInterval);
+                            state.timer.isRunning = false;
+                            document.getElementById('pauseTimerLarge').innerHTML = '▶️';
+                            alert('⏰ 倒计时结束！');
+                            playNotificationSound();
+                        }
+                    }
+                }
+                updateTimerDisplay();
+            }, 1000);
+            
+            document.getElementById('pauseTimerLarge').innerHTML = '⏸️';
+        }
+
+        function pauseTimer() {
+            state.timer.isRunning = false;
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            document.getElementById('pauseTimerLarge').innerHTML = '▶️';
+        }
+
+        function stopTimer() {
+            // 保存专注时间
+            if (state.timer.currentTaskId) {
+                const task = state.tasks.find(t => t.id === state.timer.currentTaskId);
+                if (task) {
+                    task.focusTime = state.timer.seconds;
+                    
+                    // 记录专注记录
+                    state.focusRecords.push({
+                        taskId: task.id,
+                        taskName: task.title,
+                        duration: state.timer.seconds,
+                        date: new Date().toISOString(),
+                        type: task.modules?.[0] || 'study'
+                    });
+                }
+            }
+            
+            // 停止计时器
+            pauseTimer();
+            
+            // 停止白噪音
+            audioManager.stop();
+            
+            // 关闭浮层
+            document.getElementById('timerOverlay').classList.remove('active');
+            
+            // 重置计时器
+            state.timer.seconds = 0;
+            state.timer.currentTaskId = null;
+            state.timer.currentTaskName = '';
+            state.timer.isRunning = false;
+            
+            saveState();
+            renderTasks();
+            updateStats();
+        }
+
+        function updateTimerDisplay() {
+            const display = document.getElementById('timerDisplayLarge');
+            const hours = Math.floor(state.timer.seconds / 3600);
+            const minutes = Math.floor((state.timer.seconds % 3600) / 60);
+            const secs = state.timer.seconds % 60;
+            display.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function setTimerMode(mode) {
+            state.timer.mode = mode;
+            if (mode === 'countup') {
+                state.timer.seconds = state.tasks.find(t => t.id === state.timer.currentTaskId)?.focusTime || 0;
+            } else {
+                const minutes = parseInt(document.getElementById('countdownMinutes').value) || 25;
+                state.timer.seconds = minutes * 60;
+            }
+            updateTimerDisplay();
+        }
+
+        // ==================== 任务操作 ====================
+        function completeTask(taskId) {
+            const task = state.tasks.find(t => t.id === taskId);
+            if (task) {
+                task.completed = true;
+                task.completedAt = new Date().toISOString();
+                
+                if (state.timer.currentTaskId === taskId) {
+                    stopTimer();
+                }
+                
+                const reward = prompt(`恭喜完成任务「${task.title}」！给自己什么奖励？`, '');
+                if (reward) {
+                    task.reward = reward;
+                    task.rewardClaimed = true;
+                }
+                
+                saveState();
+                renderTasks();
+                updateStats();
+            }
+        }
+
+        function deleteTask(taskId) {
+            if (confirm('确定删除此任务？')) {
+                state.tasks = state.tasks.filter(t => t.id !== taskId);
+                saveState();
+                renderTasks();
+            }
+        }
+
+        // ==================== 白噪音事件 ====================
+        function initNoiseListeners() {
+            document.querySelectorAll('#timerNoiseGrid .noise-item[data-noise]').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    audioManager.play(item);
+                });
+            });
+
+            document.getElementById('timerVolumeSlider').addEventListener('input', (e) => {
+                audioManager.setVolume(e.target.value);
+            });
+
+            document.getElementById('timerCustomNoiseBtn').addEventListener('click', () => {
+                document.getElementById('audioUpload').click();
+            });
+        }
+
+        // ==================== 定时关闭 ====================
+        function setSleepTimer(minutes) {
+            audioManager.setSleepTimer(minutes);
+        }
+
+        function setCustomSleepTimer() {
+            const minutes = parseInt(document.getElementById('timerCustomSleep').value);
+            if (minutes > 0 && minutes <= 480) {
+                audioManager.setSleepTimer(minutes);
+            } else {
+                alert('请输入1-480之间的分钟数');
+            }
+        }
+
+        // ==================== 书籍模块 ====================
+        function renderBooks() {
+            const bookList = document.getElementById('bookList');
+            if (!bookList) return;
+
+            bookList.innerHTML = '';
+            state.books.forEach(book => {
+                const div = document.createElement('div');
+                div.className = 'book-item';
+                div.innerHTML = `
+                    <div style="font-size: 36px; margin-right: 16px;">📖</div>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 500; margin-bottom: 4px;">${book.title}</div>
+                        <div style="font-size: 13px; color: var(--text-secondary);">已读: ${formatTime(book.readTime || 0)}</div>
+                    </div>
+                `;
+                bookList.appendChild(div);
+            });
+        }
+
+        // ==================== 自定义音频 ====================
+        document.getElementById('audioUpload').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file && file.size <= 10 * 1024 * 1024) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const customNoise = {
+                        id: 'custom_' + Date.now(),
+                        name: file.name,
+                        data: e.target.result,
+                        type: file.type
+                    };
+                    state.customNoises.push(customNoise);
+                    saveState();
+                    renderCustomNoises();
+                    addCustomNoiseToTimer(customNoise);
+                    alert('音频上传成功！');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                alert('文件过大，请选择小于10MB的文件');
+            }
+        });
+
+        function renderCustomNoises() {
+            const list = document.getElementById('customAudioList');
+            if (!list) return;
+            
+            list.innerHTML = '';
+            state.customNoises.forEach(noise => {
+                const div = document.createElement('div');
+                div.className = 'noise-item';
+                div.style.cssText = 'display: flex; align-items: center; justify-content: space-between; padding: 12px;';
+                div.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <i style="font-size: 24px;">🎵</i>
+                        <span>${noise.name.slice(0, 15)}</span>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button onclick="playCustomNoise('${noise.id}')" style="background: var(--accent); border: none; color: white; padding: 6px 12px; border-radius: 20px; cursor: pointer;">播放</button>
+                        <button onclick="deleteCustomNoise('${noise.id}')" style="background: var(--text-secondary); border: none; color: white; padding: 6px 12px; border-radius: 20px; cursor: pointer;">删除</button>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function addCustomNoiseToTimer(noise) {
+            const timerGrid = document.getElementById('timerNoiseGrid');
+            const customBtn = document.getElementById('timerCustomNoiseBtn');
+            
+            const noiseItem = document.createElement('div');
+            noiseItem.className = 'noise-item';
+            noiseItem.dataset.noise = noise.id;
+            noiseItem.innerHTML = `
+                <i>🎵</i>
+                <span>${noise.name.slice(0, 6)}</span>
+            `;
+            noiseItem.addEventListener('click', (e) => {
+                e.stopPropagation();
+                audioManager.playCustom(noise.data, noise.id);
+            });
+            
+            timerGrid.insertBefore(noiseItem, customBtn);
+        }
+
+        function playCustomNoise(id) {
+            const noise = state.customNoises.find(n => n.id === id);
+            if (noise) {
+                audioManager.playCustom(noise.data, id);
+            }
+        }
+
+        function deleteCustomNoise(id) {
+            if (confirm('确定删除此音效？')) {
+                state.customNoises = state.customNoises.filter(n => n.id !== id);
+                saveState();
+                renderCustomNoises();
+                document.querySelectorAll(`#timerNoiseGrid .noise-item[data-noise="${id}"]`).forEach(el => el.remove());
+            }
+        }
+
+        // ==================== 统计 ====================
+        function updateStats() {
+            const now = new Date();
+            const startOfWeek = new Date(now);
+            startOfWeek.setDate(now.getDate() - now.getDay());
+            startOfWeek.setHours(0, 0, 0, 0);
+            
+            let weeklySeconds = 0;
+            let studySeconds = 0;
+            let sportSeconds = 0;
+            let habitSeconds = 0;
+            
+            state.focusRecords.forEach(record => {
+                const recordDate = new Date(record.date);
+                if (recordDate >= startOfWeek) {
+                    weeklySeconds += record.duration;
+                    
+                    if (record.type === 'study') studySeconds += record.duration;
+                    else if (record.type === 'sport') sportSeconds += record.duration;
+                    else if (record.type === 'habit') habitSeconds += record.duration;
+                }
+            });
+
+            document.getElementById('weeklyHours').textContent = (weeklySeconds / 3600).toFixed(1);
+            document.getElementById('studyHours').textContent = (studySeconds / 3600).toFixed(1);
+            document.getElementById('sportHours').textContent = (sportSeconds / 3600).toFixed(1);
+            document.getElementById('habitHours').textContent = (habitSeconds / 3600).toFixed(1);
+
+            checkAchievements(weeklySeconds / 3600);
+            renderAchievementHistory();
+        }
+
+        function checkAchievements(weeklyHours) {
+            if (weeklyHours >= 30 && !state.achievements.small.achieved) {
+                state.achievements.small.achieved = true;
+                state.achievements.small.achievedAt = new Date().toISOString();
+                alert(`🎉 恭喜达成小成就！奖励: ${state.achievements.small.reward || '给自己一个奖励吧'}`);
+            }
+            
+            if (weeklyHours >= 100 && !state.achievements.big.achieved) {
+                state.achievements.big.achieved = true;
+                state.achievements.big.achievedAt = new Date().toISOString();
+                alert(`🏆 太棒了！达成大成就！奖励: ${state.achievements.big.reward || '庆祝一下吧'}`);
+            }
+        }
+
+        function renderAchievementHistory() {
+            const historyDiv = document.getElementById('achievementHistory');
+            historyDiv.innerHTML = '';
+            
+            if (state.achievements.small.achieved) {
+                historyDiv.innerHTML += `
+                    <div style="padding: 12px; background: var(--bg-secondary); border-radius: 16px; margin-bottom: 8px;">
+                        🥉 小成就达成于 ${new Date(state.achievements.small.achievedAt).toLocaleDateString()}
+                        ${state.achievements.small.reward ? '<br>✨ 奖励: ' + state.achievements.small.reward : ''}
+                    </div>
+                `;
+            }
+            
+            if (state.achievements.big.achieved) {
+                historyDiv.innerHTML += `
+                    <div style="padding: 12px; background: var(--bg-secondary); border-radius: 16px; margin-bottom: 8px;">
+                        🥇 大成就达成于 ${new Date(state.achievements.big.achievedAt).toLocaleDateString()}
+                        ${state.achievements.big.reward ? '<br>✨ 奖励: ' + state.achievements.big.reward : ''}
+                    </div>
+                `;
+            }
+            
+            if (!state.achievements.small.achieved && !state.achievements.big.achieved) {
+                historyDiv.innerHTML = '<div style="color: var(--text-secondary); text-align: center;">暂无成就记录，继续努力！</div>';
+            }
+        }
+
+        // ==================== 模态框 ====================
+        function showAddTaskModal() {
+            document.getElementById('taskModal').classList.add('active');
+            const container = document.getElementById('moduleCheckboxes');
+            container.innerHTML = '';
+            state.modules.forEach(module => {
+                container.innerHTML += `
+                    <label>
+                        <input type="checkbox" value="${module.id}"> 
+                        ${module.icon} ${module.name}
+                    </label>
+                `;
+            });
+        }
+
+        function hideAddTaskModal() {
+            document.getElementById('taskModal').classList.remove('active');
+            document.getElementById('taskTitle').value = '';
+            document.getElementById('taskDeadline').value = '';
+        }
+
+        function addTask() {
+            const title = document.getElementById('taskTitle').value;
+            if (!title) return alert('请输入任务名称');
+
+            const checkboxes = document.querySelectorAll('#moduleCheckboxes input:checked');
+            const modules = Array.from(checkboxes).map(cb => cb.value);
+
+            const task = {
+                id: Date.now().toString(),
+                title: title,
+                priority: document.getElementById('taskPriority').value,
+                modules: modules,
+                deadline: document.getElementById('taskDeadline').value,
+                completed: false,
+                focusTime: 0,
+                createdAt: new Date().toISOString()
+            };
+
+            state.tasks.push(task);
+            saveState();
+            renderTasks();
+            hideAddTaskModal();
+        }
+
+        function showAddBookModal() {
+            document.getElementById('bookModal').classList.add('active');
+        }
+
+        function hideAddBookModal() {
+            document.getElementById('bookModal').classList.remove('active');
+            document.getElementById('bookTitle').value = '';
+            document.getElementById('bookFile').value = '';
+        }
+
+        function addBook() {
+            const title = document.getElementById('bookTitle').value;
+            const file = document.getElementById('bookFile').files[0];
+            
+            if (!title || !file) return alert('请填写书名并选择文件');
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const book = {
+                    id: Date.now().toString(),
+                    title: title,
+                    fileName: file.name,
+                    fileType: file.type,
+                    fileData: e.target.result,
+                    readTime: 0,
+                    createdAt: new Date().toISOString()
+                };
+                state.books.push(book);
+                saveState();
+                renderBooks();
+                hideAddBookModal();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // ==================== 个人资料 ====================
+        function saveProfile() {
+            state.user.nickname = document.getElementById('nickname').value;
+            state.user.username = document.getElementById('username').value;
+            state.user.password = document.getElementById('password').value;
+            saveState();
+            alert('资料已保存');
+        }
+
+        function saveAchievements() {
+            state.achievements.small.target = document.getElementById('smallAchievement').value;
+            state.achievements.small.reward = document.getElementById('smallReward').value;
+            state.achievements.big.target = document.getElementById('bigAchievement').value;
+            state.achievements.big.reward = document.getElementById('bigReward').value;
+            saveState();
+            alert('成就设置已保存');
+        }
+
+        // ==================== 主题设置 ====================
+        document.getElementById('themeMode').addEventListener('change', (e) => {
+            document.documentElement.setAttribute('data-theme', e.target.value);
+            state.theme.mode = e.target.value;
+            saveState();
+        });
+
+        document.querySelectorAll('.color-option').forEach(opt => {
+            opt.addEventListener('click', () => {
+                document.querySelectorAll('.color-option').forEach(o => o.classList.remove('selected'));
+                opt.classList.add('selected');
+                const color = opt.dataset.color;
+                document.documentElement.style.setProperty('--accent', color);
+                state.theme.primaryColor = color;
+                saveState();
+            });
+        });
+
+        document.getElementById('avatarUpload').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('avatarPreview').style.backgroundImage = `url('${e.target.result}')`;
+                    state.user.avatar = e.target.result;
+                    saveState();
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        document.getElementById('bgImage').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('appContainer').style.backgroundImage = `url('${e.target.result}')`;
+                    document.getElementById('appContainer').style.backgroundSize = 'cover';
+                    document.getElementById('appContainer').style.backgroundPosition = 'center';
+                    state.theme.bgImage = e.target.result;
+                    saveState();
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // ==================== 数据导入导出 ====================
+        function exportData() {
+            const dataStr = JSON.stringify(state, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `时光记录者备份-${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importData() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const imported = JSON.parse(e.target.result);
+                        state = imported;
+                        saveState();
+                        location.reload();
+                    } catch (err) {
+                        alert('导入失败：文件格式错误');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        // ==================== 工具函数 ====================
+        function formatTime(seconds) {
+            if (!seconds) return '0m';
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            return h > 0 ? `${h}h${m}m` : `${m}m`;
+        }
+
+        function playNotificationSound() {
+            const audio = new Audio();
+            audio.src = 'data:audio/wav;base64,UklGRlwAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YVoAAACAgICAf39/f39/f3+AgICAf39/f39/f3+AgICAf39/f39/f3+AgICAf39/f39/f3+AgICAf39/f39/f3+AgICAf39/fw==';
+            audio.play().catch(() => {});
+        }
+
+        // ==================== 导航 ====================
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const page = item.dataset.page;
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                item.classList.add('active');
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                document.getElementById(page + 'Page').classList.add('active');
+            });
+        });
+
+        // ==================== 计时器控制 ====================
+        document.getElementById('pauseTimerLarge').addEventListener('click', () => {
+            if (state.timer.isRunning) {
+                pauseTimer();
+            } else {
+                startTimer();
+            }
+        });
+
+        document.getElementById('stopTimerLarge').addEventListener('click', () => {
+            stopTimer();
+        });
+
+        // 计时模式切换
+        document.getElementById('modeCountupBtn').addEventListener('click', () => {
+            document.getElementById('modeCountupBtn').classList.add('active');
+            document.getElementById('modeCountdownBtn').classList.remove('active');
+            document.getElementById('countdownInput').classList.remove('active');
+            setTimerMode('countup');
+        });
+
+        document.getElementById('modeCountdownBtn').addEventListener('click', () => {
+            document.getElementById('modeCountdownBtn').classList.add('active');
+            document.getElementById('modeCountupBtn').classList.remove('active');
+            document.getElementById('countdownInput').classList.add('active');
+            setTimerMode('countdown');
+        });
+
+        document.getElementById('countdownMinutes').addEventListener('input', (e) => {
+            const minutes = parseInt(e.target.value) || 25;
+            state.timer.seconds = minutes * 60;
+            updateTimerDisplay();
+        });
+
+        // 点击浮层外部不关闭
+        document.getElementById('timerOverlay').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('timerOverlay')) {
+                // 不关闭，防止误触
+            }
+        });
+
+        // ==================== 初始化事件监听 ====================
+        function initEventListeners() {
+            initNoiseListeners();
+            
+            window.addEventListener('beforeunload', () => {
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                }
+                if (state.timer.currentTaskId) {
+                    const task = state.tasks.find(t => t.id === state.timer.currentTaskId);
+                    if (task) {
+                        task.focusTime = state.timer.seconds;
+                    }
+                }
+                saveState();
+            });
+
+            setInterval(saveState, 30000);
+
+            // 键盘支持
+            document.addEventListener('keydown', (e) => {
+                if (e.code === 'Space' && document.getElementById('timerOverlay').classList.contains('active')) {
+                    e.preventDefault();
+                    document.getElementById('pauseTimerLarge').click();
+                } else if (e.code === 'Escape' && document.getElementById('timerOverlay').classList.contains('active')) {
+                    document.getElementById('stopTimerLarge').click();
+                }
+            });
+        }
+
+        // ==================== 启动应用 ====================
+        init();
+    </script>
+</body>
+</html>
