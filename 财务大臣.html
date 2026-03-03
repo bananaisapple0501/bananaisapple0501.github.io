@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>💰 财务小管家</title>
+<style>
+*{box-sizing:border-box}
+:root{
+  --bg:#fdf6f8; --bubble-bot:#fff; --bubble-user:#ff5e87;
+  --border:#ffd1e0; --text:#333; --btn:#ff5e87; --btn2:#ff9bbb;
+}
+body.night{
+  --bg:#1a1a1a; --bubble-bot:#2d2d2d; --bubble-user:#4ea8f7;
+  --border:#444; --text:#eee; --btn:#4ea8f7; --btn2:#6cbfbf;
+}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;transition:all .3s}
+.container{max-width:420px;margin:0 auto;padding:15px;height:100vh;display:flex;flex-direction:column}
+.header{text-align:center;padding:10px 0}
+.header h2{margin:0;color:var(--btn);font-size:22px}
+.chat{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:10px}
+.bubble{max-width:75%;padding:10px 12px;border-radius:14px;line-height:1.4;font-size:15px;position:relative}
+.bot{background:var(--bubble-bot);border:1px solid var(--border);align-self:flex-start;border-top-left-radius:4px}
+.user{background:var(--bubble-user);color:#fff;align-self:flex-end;border-top-right-radius:4px}
+.input-area{display:flex;gap:8px;margin-top:10px}
+input{flex:1;padding:12px 14px;border:1px solid var(--border);border-radius:20px;outline:none;font-size:14px;background:var(--bubble-bot);color:var(--text)}
+button{padding:12px 14px;background:var(--btn);color:#fff;border:none;border-radius:20px;font-weight:bold;cursor:pointer}
+.toolbar,.skin-bar{display:flex;gap:6px;margin-top:6px}
+.toolbar button,.skin-bar button{flex:1;background:var(--btn2);font-size:12px;padding:8px;border-radius:16px}
+.loading{opacity:.5}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header"><h2>🥺 财务小管家</h2></div>
+  <div class="chat" id="chat"></div>
+  <div class="skin-bar">
+    <button onclick="setSkin('default')">默认</button>
+    <button onclick="setSkin('pink')">粉粉</button>
+    <button onclick="setSkin('blue')">蓝蓝</button>
+    <button onclick="toggleNight()">夜间</button>
+  </div>
+  <div class="toolbar">
+    <button onclick="resetAll()">清空记录</button>
+    <button onclick="changeBudget()">改预算</button>
+    <button onclick="changeName()">改称呼</button>
+  </div>
+  <div class="input-area">
+    <input id="msg" placeholder="告诉我你花了什么～例：游戏周边50">
+    <button onclick="send()">发送</button>
+  </div>
+</div>
+
+<script>
+let budget = 0, left = 0;
+let entertainment = 0, study = 0, food = 0;
+let nickname = "大人";
+
+const gameWords = ["游戏","周边","皮肤","抽卡","原神","王者","吃鸡","和平精英","王者荣耀","蛋仔","迷你世界","我的世界","第五人格","光遇","崩坏","星穹","绝区零","逆水寒","穿越火线","QQ飞车","炫舞","守望先锋","APEX","PUBG","CSGO","DOTA2","魔兽","炉石","手游","端游","网游"];
+const foodWords = ["饭","吃","外卖","食堂","奶茶","咖啡","粥","面","粉","火锅","烧烤","烤肉","汉堡","炸鸡","披萨","寿司","麻辣烫","麻辣香锅","米线","螺蛳粉","饺子","包子","面包","蛋糕","水果","零食","可乐","牛奶","酸奶","夜宵"];
+const studyWords = ["书","文具","笔","本子","资料","课程","学费","试卷","练习册","笔记","课本","学习","网课","考研","考公","四六级","教资"];
+
+function speak(text){
+  if('speechSynthesis' in window){
+    let utt = new SpeechSynthesisUtterance(text);
+    utt.lang = "zh-CN"; utt.rate = 1.1;
+    window.speechSynthesis.speak(utt);
+  }
+}
+
+function addMsg(text, isUser){
+  const chat = document.getElementById('chat');
+  const div = document.createElement('div');
+  div.className = 'bubble ' + (isUser ? 'user' : 'bot');
+  div.innerText = text;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function send(){
+  const text = document.getElementById('msg').value.trim();
+  if(!text) return;
+  addMsg(text, true);
+  document.getElementById('msg').value = '';
+  setTimeout(()=>process(text), 1500);
+}
+
+function process(text){
+  if(!budget){
+    const num = extractNumber(text);
+    if(num && num>0){
+      budget=num; left=num;
+      const m = [`🥳 好嘞${nickname}！本月预算 ${budget} 元，我盯紧钱包～`,`😎 收到${nickname}！本月额度 ${budget} 元，不乱花！`];
+      const msg = m[Math.random()*m.length|0];
+      addMsg(msg, false); speak(msg);
+      return;
+    }else{
+      const t = `😯 ${nickname}，先告诉我本月预算多少呀～`;
+      addMsg(t,false); speak(t);
+      return;
+    }
+  }
+
+  const cost = extractNumber(text);
+  if(!cost || cost<=0){
+    if(text.includes("账单")||text.includes("花销")||text.includes("多少")){
+      showTotal(); return;
+    }
+    const t = `😣 ${nickname}，要告诉我花了多少钱哦～`;
+    addMsg(t,false); speak(t);
+    return;
+  }
+
+  let msg = "";
+  if(gameWords.some(w=>text.includes(w))){
+    entertainment += cost;
+    const arr = [
+      `🎮 ${nickname}，别再给游戏送钱啦，钱包要哭！`,
+      `😱 ${nickname}，游戏又花钱啦，省着点呀！`,
+      `🥺 ${nickname}，再抽卡就要吃土了呜呜～`
+    ];
+    msg = arr[Math.random()*arr.length|0];
+  }else if(studyWords.some(w=>text.includes(w))){
+    study += cost;
+    const arr = [
+      `📚 ${nickname}爱学习超棒，但别太破费～`,
+      `✨ ${nickname}投资自己很棒，注意额度哦！`,
+      `🥰 ${nickname}认真学习，奖励自己一下～`
+    ];
+    msg = arr[Math.random()*arr.length|0];
+  }else if(foodWords.some(w=>text.includes(w))){
+    food += cost;
+    const arr = [
+      `🍚 ${nickname}少吃外卖哦，攒钱更香！`,
+      `🥤 ${nickname}又喝奶茶啦，会长胖的～`,
+      `🍔 ${nickname}，吃货也要省钱呀！`
+    ];
+    msg = arr[Math.random()*arr.length|0];
+  }else{
+    const arr = [
+      `🧐 ${nickname}，这笔开销有点突然哦～`,
+      `🤨 ${nickname}，这钱花去哪啦？`,
+      `😯 ${nickname}，又悄悄花钱啦！`
+    ];
+    msg = arr[Math.random()*arr.length|0];
+  }
+
+  left -= cost;
+  const rem = Math.round(left);
+  const end = [`\n💰 预算还剩 ${rem}，省着点花这个月还要过呢！`,
+               `\n💸 还剩 ${rem} 元，${nickname}要忍住呀！`,
+               `\n⚠️ 只剩 ${rem} 元啦，别再乱花啦～`];
+  msg += end[Math.random()*end.length|0];
+  addMsg(msg,false); speak(msg);
+}
+
+function extractNumber(text){
+  const n = text.match(/\d+/g);
+  return n ? parseFloat(n[0]) : null;
+}
+
+function showTotal(){
+  const t = `
+📊 本月账单
+🎮 娱乐：${Math.round(entertainment)} 元
+📚 学习：${Math.round(study)} 元
+🍚 餐饮：${Math.round(food)} 元
+💸 剩余：${Math.round(left)} 元`.trim();
+  addMsg(t,false); speak(t);
+}
+
+function resetAll(){
+  budget=left=entertainment=study=food=0;
+  document.getElementById('chat').innerHTML='';
+  const m = `🧹 记录清空啦～${nickname}重新告诉我预算吧！`;
+  addMsg(m,false); speak(m);
+}
+
+function changeBudget(){
+  const b = prompt("输入新预算：");
+  const num = parseFloat(b);
+  if(num&&num>0){
+    budget=num; left=num;
+    const m = `✅ 预算已改为 ${num} 元！`;
+    addMsg(m,false); speak(m);
+  }else{
+    const m = "😣 数字不对哦～";
+    addMsg(m,false); speak(m);
+  }
+}
+
+function changeName(){
+  const name = prompt("你想让我怎么称呼你？","主人/宝宝/宝子");
+  if(name&&name.trim()){
+    nickname=name.trim();
+    const m = `🥰 好嘞！以后我就叫你【${nickname}】啦～`;
+    addMsg(m,false); speak(m);
+  }
+}
+
+function toggleNight(){
+  document.body.classList.toggle("night");
+}
+
+function setSkin(skin){
+  document.body.classList.remove("pink","blue");
+  if(skin==="pink") document.body.classList.add("pink");
+  if(skin==="blue") document.body.classList.add("blue");
+}
+
+window.addEventListener('DOMContentLoaded',()=>{
+  const m = `🥺 你好呀～先告诉我本月预算多少元吧！`;
+  addMsg(m,false); speak(m);
+});
+</script>
+</html>
